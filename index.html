@@ -589,7 +589,7 @@ function convertJsonDraw(d){
 function getQuarters(){
   const now=new Date();
   return [3,2,1,0].map(q=>[2,1,0].map(m=>{
-    const off=q*3+m+1;
+    const off=q*3+m;
     const dt=new Date(now.getFullYear(),now.getMonth()-off,1);
     return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
   }));
