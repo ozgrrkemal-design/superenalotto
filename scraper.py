@@ -29,8 +29,10 @@ def parse_italian_date(text: str) -> str | None:
 def load_existing() -> dict:
     if not DRAWS_FILE.exists():
         return {}
-    with open(DRAWS_FILE, encoding="utf-8-sig") as f:
-        data = json.load(f)
+    raw = DRAWS_FILE.read_bytes()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raw = raw[3:]
+    data = json.loads(raw.decode("utf-8"))
     return {d["date"]: d for d in data}
 
 
