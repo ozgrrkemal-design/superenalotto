@@ -737,7 +737,7 @@ function renderCompare3(months1,months2,months3,containerId,countId){
 }
 
 // ===== COMPARE4 — 4-period intersection =====
-function renderCompare4(months1,months2,months3,months4,containerId,countId){
+function renderCompare4(months1,months2,months3,months4,containerId,countId,minFreq=1){
   const s1=new Set(months1),s2=new Set(months2),s3=new Set(months3),s4=new Set(months4);
   const d1=DRAWS.filter(d=>s1.has(d[7]));
   const d2=DRAWS.filter(d=>s2.has(d[7]));
@@ -746,8 +746,9 @@ function renderCompare4(months1,months2,months3,months4,containerId,countId){
   const f1=buildFreq(d1),f2=buildFreq(d2),f3=buildFreq(d3),f4=buildFreq(d4);
   const intersection=[];
   for(let n=1;n<=90;n++){
-    if(f1.main[n]&&f2.main[n]&&f3.main[n]&&f4.main[n]){
-      intersection.push({num:n,f1:f1.main[n],f2:f2.main[n],f3:f3.main[n],f4:f4.main[n]});
+    const v1=f1.main[n]||0,v2=f2.main[n]||0,v3=f3.main[n]||0,v4=f4.main[n]||0;
+    if(v1>=minFreq&&v2>=minFreq&&v3>=minFreq&&v4>=minFreq){
+      intersection.push({num:n,f1:v1,f2:v2,f3:v3,f4:v4});
     }
   }
   intersection.sort((a,b)=>(b.f1+b.f2+b.f3+b.f4)-(a.f1+a.f2+a.f3+a.f4)||a.num-b.num);
@@ -788,7 +789,7 @@ function initAll(draws){
   renderCompare(Q[1],Q[2],'compareB','compareBCount');
   renderCompare(Q[2],Q[3],'compareC','compareCCount');
   renderCompare3(Q[0],Q[1],Q[2],'compareD','compareDCount');
-  renderCompare4(Q[0],Q[1],Q[2],Q[3],'compareE','compareECount');
+  renderCompare4(Q[0],Q[1],Q[2],Q[3],'compareE','compareECount',3);
 }
 
 // draws.json → GitHub Pages'ten güncel veri; başarısız olursa inline data
