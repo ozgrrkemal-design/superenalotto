@@ -69,6 +69,19 @@ body::before{content:'';position:fixed;inset:0;background-image:repeating-linear
 .compare-cell .freqs strong{color:var(--ink);font-weight:500;}
 @media (max-width:600px){.compare-section{padding:20px 16px;}.compare-col{grid-template-columns:48px 1fr;gap:14px;}.compare-col .col-letter{font-size:40px;}}
 
+/* ========== COLLAPSIBLE COMPARE ========== */
+.compare-col.collapsible .col-title{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.compare-col.collapsible .col-title::after{content:'▾';font-style:normal;font-size:18px;color:var(--muted);transition:transform 0.2s;line-height:1;}
+.compare-col.collapsible.collapsed .col-title::after{content:'▸';}
+.compare-col.collapsible.collapsed .col-desc,
+.compare-col.collapsible.collapsed .col-meta,
+.compare-col.collapsible.collapsed .compare-nums{display:none;}
+.compare-col.collapsible.collapsed{opacity:0.7;}
+/* ========== SHOW MORE BUTTON ========== */
+.show-more-btn{display:block;width:100%;margin-top:16px;padding:14px;background:none;border:1px solid var(--ink);font-family:'Cormorant Garamond',serif;font-size:19px;font-style:italic;cursor:pointer;letter-spacing:0.03em;color:var(--muted);transition:all 0.2s;text-align:center;}
+.show-more-btn:hover{background:rgba(184,137,61,0.1);color:var(--ink);box-shadow:3px 3px 0 var(--gold);}
+[data-preview="hidden"]{display:none !important;}
+
 /* ========== STEP / PANEL ========== */
 .tab-panel{display:none;animation:fadeIn 0.4s ease;}
 .tab-panel.active{display:block;}
@@ -193,7 +206,7 @@ footer .ornament{font-family:'Cormorant Garamond',serif;font-style:italic;font-s
 </div>
 <div class="compare-cols">
 
-<div class="compare-col">
+<div class="compare-col collapsible collapsed">
 <div class="col-letter">a</div>
 <div>
 <div class="col-title">Ardışık <em>3 aylık</em> dilimler — ortak çıkanlar</div>
@@ -203,7 +216,7 @@ footer .ornament{font-family:'Cormorant Garamond',serif;font-style:italic;font-s
 </div>
 </div>
 
-<div class="compare-col">
+<div class="compare-col collapsible collapsed">
 <div class="col-letter">b</div>
 <div>
 <div class="col-title">Sonraki <em>3 ay</em> ile karşılaştırma</div>
@@ -213,7 +226,7 @@ footer .ornament{font-family:'Cormorant Garamond',serif;font-style:italic;font-s
 </div>
 </div>
 
-<div class="compare-col">
+<div class="compare-col collapsible collapsed">
 <div class="col-letter">c</div>
 <div>
 <div class="col-title">Sonraki <em>3 ay</em> ile karşılaştırma</div>
@@ -223,7 +236,7 @@ footer .ornament{font-family:'Cormorant Garamond',serif;font-style:italic;font-s
 </div>
 </div>
 
-<div class="compare-col">
+<div class="compare-col collapsible collapsed">
 <div class="col-letter">d</div>
 <div>
 <div class="col-title"><em>a</em> &amp; <em>b</em> kesişimi — 3 dönemde ortak</div>
@@ -620,6 +633,9 @@ function renderHotSection(data,suffix){
 }
 function renderArchive(data,archiveId,controlsRoot){
   const archive=document.getElementById(archiveId);archive.innerHTML='';
+  // remove old show-more btn if exists
+  const oldBtn=controlsRoot.parentNode.querySelector('.show-more-btn');
+  if(oldBtn)oldBtn.remove();
   const byMonth={};
   data.forEach(d=>{const m=d[7];if(!byMonth[m])byMonth[m]=[];byMonth[m].push(d);});
   const months=Object.keys(byMonth).sort().reverse();
@@ -643,6 +659,24 @@ function renderArchive(data,archiveId,controlsRoot){
     });
     archive.appendChild(block);
   });
+  // Show only 5 most recent draws by default
+  const allRows=Array.from(archive.querySelectorAll('.draw-row:not(.head)'));
+  const total=allRows.length;
+  if(total>5){
+    allRows.slice(5).forEach(r=>r.dataset.preview='hidden');
+    archive.querySelectorAll('.month-block').forEach(block=>{
+      const vis=block.querySelectorAll('.draw-row:not(.head):not([data-preview="hidden"])').length;
+      if(vis===0)block.dataset.preview='hidden';
+    });
+    const btn=document.createElement('button');
+    btn.className='show-more-btn';
+    btn.textContent='↓ Tümünü göster — '+total+' çekiliş';
+    btn.addEventListener('click',()=>{
+      archive.querySelectorAll('[data-preview="hidden"]').forEach(el=>delete el.dataset.preview);
+      btn.remove();
+    });
+    archive.after(btn);
+  }
 }
 function setupFilter(controlsRoot,archiveId){
   const search=controlsRoot.querySelector('.search-input');
@@ -653,6 +687,12 @@ function setupFilter(controlsRoot,archiveId){
   function apply(){
     const q=search.value.toLowerCase().trim();
     const m=monthFilter.value;
+    // If any filter is active, clear preview hiding and remove show-more btn
+    if(q||(m!=='all')){
+      archive.querySelectorAll('[data-preview="hidden"]').forEach(el=>delete el.dataset.preview);
+      const btn=archive.parentNode.querySelector('.show-more-btn');
+      if(btn)btn.remove();
+    }
     let count=0,total=0;
     archive.querySelectorAll('.month-block').forEach(block=>{
       let blockHasVisible=false;
@@ -682,6 +722,13 @@ function initStep(data,suffix){
   renderArchive(data,'archive-'+suffix,ctrl);
   setupFilter(ctrl,'archive-'+suffix);
 }
+// ===== Collapsible compare columns =====
+document.querySelectorAll('.compare-col.collapsible .col-title').forEach(title=>{
+  title.addEventListener('click',()=>{
+    title.closest('.compare-col').classList.toggle('collapsed');
+  });
+});
+
 // ===== Tab switching =====
 const tabBtns=document.querySelectorAll('.tab-btn');
 const panels=document.querySelectorAll('.tab-panel');
