@@ -1,0 +1,36 @@
+name: Update SuperEnalotto Draws
+
+on:
+  schedule:
+    # Salı, Perşembe, Cuma, Cumartesi — çekiliş 20:00 Roma (UTC+2), 19:30'da çalışır
+    - cron: '30 19 * * 2,4,5,6'
+  workflow_dispatch:   # manuel tetikleme için
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: python scraper.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add draws.json
+          git diff --staged --quiet || git commit -m "chore: update draws $(date +'%Y-%m-%d')"
+          git push
